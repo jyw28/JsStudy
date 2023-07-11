@@ -1,21 +1,38 @@
-const num1 = 2;
-let num2 = 3;
-// let는 동적
-// const는 정적
-// var도 있긴 하지만 잘 쓰지 않음
+const dotenv = require('dotenv');
+const express = require('express');
+const nunjucks = require('nunjucks');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const pageRouter = require('pageRouter');
+dotenv.config();
+const app = express();
+app.set('port',process.env.PORT || 8001);
+app.set('view engin', 'html');
+nunjucks.configure('views',{
+    express : app,
+    watch: true
+})
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(express.urlencoded({extended : false}));
+app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(session({
+    resave: false,
+    saveUninitialized: false,
+    secret: process.env.COOKIE_SECRET,
+    cookie: {
+        httpOnly : true,
+        secure: false,
+    },
+}))
+app.use('/', pageRouter);
+app.use((req,res,next)=>{
+    const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+    error.status = 404;
+    next(error);
+})
 
-//실행할 때는 터미널에서 node (파일이름)
-// npm init
-// npm i(install) express
-
-
-
-console.log(num1+num2);
-console.log(num1-num2);
-console.log(num1*num2);
-console.log(num1/num2);
-console.log(num1%num2);
-
-
-// === 는 타입까지 비교
-// C랑 거의 같음
+app.listen(app.get('port'),()=>{
+    console.log(app.get('port'), '번 포트에서 대기 중');
+})
